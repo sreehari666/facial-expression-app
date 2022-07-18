@@ -15,4 +15,4 @@ open command prompt and execute the following command
 
 5 . pip install -r requirements.txt
 
-6 . ./manage.py runserver
+6 . python manage.py runserver
