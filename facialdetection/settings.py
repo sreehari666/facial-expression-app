@@ -80,8 +80,13 @@ WSGI_APPLICATION = 'facialdetection.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': 'face',
+        'CLIENT':{
+            'host':'mongodb+srv://sreehari:sreehari%40mongo123@cluster0.ihzip.mongodb.net/?retryWrites=true&w=majority',
+            'username':'sreehari',
+            'password':'sreehari@mongo123',
+        }
     }
 }
 

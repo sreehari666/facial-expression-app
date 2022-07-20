@@ -49,7 +49,7 @@ def detect(frame):
 
 @gzip.gzip_page
 def index(request):
-    
+    print("rendering index page")
     return render(request, 'pages/index.html',{'price':300})
 
 #to capture video class
@@ -71,10 +71,12 @@ class VideoCamera(object):
         while True:
             (self.grabbed, self.frame) = self.video.read()
             ans = detect(self.frame)
+            
             if ans == 0:
                 pass
             else:  
                 print(ans)
+
 
             
 
