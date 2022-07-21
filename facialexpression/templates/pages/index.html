@@ -27,6 +27,11 @@
         <div>
           <button type="button" class="btn btn-primary">Start detecting</button>
           <button type="button" class="btn btn-primary float-right">Stop detecting</button>
+          <ul>
+            {% for face in data_ %}
+                <li>{{ face.emotions }}</li>
+            {% endfor %}
+            </ul>
         </div>
       </div>
     </div>
