@@ -13,6 +13,7 @@ import os
 from django.conf import settings
 from numpy import asarray
 from .models import Face
+from django.http import JsonResponse
 
 base_dir = settings.BASE_DIR
 print(base_dir)
@@ -54,9 +55,7 @@ def detect(frame):
 @gzip.gzip_page
 def index(request):
     print("rendering index page")
-    data_ = Face.objects.all()
-    print(data_[0])
-    return render(request, 'pages/index.html',{'data_':data_})
+    return render(request, 'pages/index.html')
 
 #to capture video class
 class VideoCamera(object):
@@ -89,12 +88,15 @@ class VideoCamera(object):
             else:
                 print("-----ans------")
                 print(ans)
-                Face.objects.filter(id=1).update(emotions=ans["dominant_emotion"])
-                Face.objects.filter(id=1).update(no_of_faces=ans["no_of_faces"])
+                try:
+                    Face.objects.filter(id=1).update(emotions=ans["dominant_emotion"])
+                    Face.objects.filter(id=1).update(no_of_faces=ans["no_of_faces"])
 
-                obj = Face.objects.get(id = 1)
-                print("Fetched face object")
-                print(obj.emotions)
+                    obj = Face.objects.get(id = 1)
+                    print("Fetched face object")
+                    print(obj.emotions)
+                except:
+                    print("data not updated in db")
 
 
             
@@ -111,3 +113,6 @@ def video_feed(request):
 
 
 
+def getData(request):
+    data_ = Face.objects.all()[:20]
+    return JsonResponse({'data':list(data_.values())})
