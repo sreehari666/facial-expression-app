@@ -30,6 +30,14 @@ get the information related to facial expression of each face.These information 
 displaying of information in the front end.Also the informations are stored in a database for report
 generation.
 
+![out_2](https://user-images.githubusercontent.com/61986594/190860731-3490f503-f328-408f-ab19-9eebf2514449.png)
+
+
+
+
+
+
+![report_out1](https://user-images.githubusercontent.com/61986594/190860746-4f685bb9-f46e-47ed-b9a1-6b1e52e9ee3e.png)
 
 To run this app in your system:
 
