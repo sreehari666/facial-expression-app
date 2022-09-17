@@ -12,13 +12,47 @@ from PIL import Image
 import os
 from django.conf import settings
 from numpy import asarray
+from .models import Face_static
 from .models import Face
+from .models import ReportData
 from django.http import JsonResponse
+from datetime import datetime
 
 base_dir = settings.BASE_DIR
 print(base_dir)
 
-    
+
+def get_deepData(face_frame):
+    try:
+        face_analysis = DeepFace.analyze(face_frame)
+        return face_analysis
+    except:
+        print("deep face failed!!!!")
+        return 0
+
+def insertData(face_count,no_of_face,frame_face):
+    print("call--")
+    print(face_count)
+    face_analysis = get_deepData(frame_face)
+    if face_analysis == 0:
+        print("deep failed returned 0")
+        return -1
+    else:
+        obj = ReportData(emotion = face_analysis["dominant_emotion"],date=datetime.now())
+        obj.save()
+        try:
+            print(Face.objects.get(face_id = face_count))
+            Face.objects.filter(face_id=face_count).update(emotions=face_analysis["dominant_emotion"])
+            Face.objects.filter(face_id=face_count).update(no_of_faces=no_of_face)
+            
+            return 0
+        except:
+            face_analysis = DeepFace.analyze(frame_face)
+            b = Face(face_id=face_count,no_of_faces=no_of_face,emotions=face_analysis["dominant_emotion"])
+            
+            b.save()
+            return 1
+ 
 def detect(frame):
     resp = RetinaFace.detect_faces(frame)
     print(resp)
@@ -34,27 +68,26 @@ def detect(frame):
             top = f_list[1] 
             right = f_list[2] 
             bottom = f_list[3] 
-
-            face_ = frame[ top-50:bottom+50,left - 50:right+50]
+            count = int(face[5])
+            # count = 2
+            face_ = frame[ top-60:bottom+60,left - 60:right+60]
             cv2.rectangle(frame,(f_list[2],f_list[3]),(f_list[0],f_list[1]),(255,255,255),1)
-                    
-            try:
-                face_analysis = DeepFace.analyze(face_)
-                print(face_analysis)
-                print(face_analysis["dominant_emotion"])
-                obj = Face()
-                doc = {"retina":resp,"deep":face_analysis,"no_of_faces":len(resp),"dominant_emotion":face_analysis["dominant_emotion"]}
-                return doc
-            except:
-                print("face not detected")
-                return 0
+            # print(face)
+            result = insertData(count,len(resp),face_)
+            Face_static.objects.filter(id = 1).update(no_of_faces=len(resp))
+            if count == len(resp):
+                return result
+            
     except:
         print("Error retina face")
+        return 0
 
 
 @gzip.gzip_page
 def index(request):
     print("rendering index page")
+    Face.objects.all().delete()
+    Face_static.objects.filter(id = 1).update(no_of_faces=0)
     return render(request, 'pages/index.html')
 
 #to capture video class
@@ -76,30 +109,11 @@ class VideoCamera(object):
         while True:
             (self.grabbed, self.frame) = self.video.read()
             ans = detect(self.frame)
-            # id_ = '62d9871f43a97aaf1bcdf27c'
-            
-            
-            # obj.emotion = "angry"
-            # obj.no_of_faces = 5
-            # obj.save()
-            
             if ans == 0:
                 pass
             else:
                 print("-----ans------")
                 print(ans)
-                try:
-                    Face.objects.filter(id=1).update(emotions=ans["dominant_emotion"])
-                    Face.objects.filter(id=1).update(no_of_faces=ans["no_of_faces"])
-
-                    obj = Face.objects.get(id = 1)
-                    print("Fetched face object")
-                    print(obj.emotions)
-                except:
-                    print("data not updated in db")
-
-
-            
 
 def gen(camera):
     while True:
@@ -111,8 +125,31 @@ def video_feed(request):
     cam = VideoCamera()
     return StreamingHttpResponse(gen(cam), content_type="multipart/x-mixed-replace;boundary=frame")
 
-
-
 def getData(request):
+    angry = 0
+    fear = 0
+    neutral = 0
+    sad = 0
+    happy = 0 
+    surprise = 0
+    disgust = 0
+    
     data_ = Face.objects.all()[:20]
-    return JsonResponse({'data':list(data_.values())})
+    for obj in data_:
+        if obj.emotions == 'angry':
+            angry += 1
+        if obj.emotions == 'fear':
+            fear += 1
+        if obj.emotions == 'neutral':
+            neutral += 1
+        if obj.emotions == 'sad':
+            sad += 1
+        if obj.emotions == 'happy':
+            happy += 1
+        if obj.emotions == 'surprise':
+            surprise += 1
+        if obj.emotions == 'disgust':
+            disgust += 1
+    list_ = [angry,fear,neutral,sad,happy,surprise,disgust]
+    temp = Face_static.objects.get(id = 1)
+    return JsonResponse({'data':list(data_.values()),'no_of_faces':temp.no_of_faces,'emotion_list':list_})
